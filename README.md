@@ -1,0 +1,2 @@
+# QPM
+quantitative portfolio management
