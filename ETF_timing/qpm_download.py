@@ -1,6 +1,6 @@
 '''
 
-This function download and clean all the Data needed to run the PortfolioCrossSection script.
+This function download and clean all the data needed to run the PortfolioCrossSection script.
 
 Chicago Booth course on Quantitative Portfolio Management
 by Ralph S.J. Koijen and Sangmin S. Oh.
@@ -30,7 +30,7 @@ def cross_section_compact(_SAMPLE_START, _SAMPLE_END, _STRATEGY_NAME, signal_var
     # Create list of variables to download
     variables_string = ', '.join(f'a.{vvv}' for vvv in signal_variables)
     
-    # Define your SQL statement for Compustat Data
+    # Define your SQL statement for Compustat data
     if len(signal_variables) > 0:
         sql_statement = f"""
         SELECT a.gvkey, a.datadate, a.at, a.ni, a.prcc_c, {variables_string}
@@ -125,7 +125,7 @@ def cross_section_compact(_SAMPLE_START, _SAMPLE_END, _STRATEGY_NAME, signal_var
     ###############################################
     print('Step 3. Import Returns and Factors')
     
-    # Define your SQL statement for monthly Data
+    # Define your SQL statement for monthly data
     sql_statement = """
     SELECT a.permno, b.ticker, a.date, a.ret, a.vol, 
            a.shrout, a.prc, b.shrcd, b.exchcd, c.dlstcd, c.dlret
@@ -256,7 +256,7 @@ def cross_section(_SAMPLE_START, _SAMPLE_END):
     ###############################################
     print('Step 1. Import Fundamentals from Compustat')
     
-    # Define your SQL statement for Compustat Data
+    # Define your SQL statement for Compustat data
     sql_statement = """
     SELECT a.gvkey, a.datadate, a.conm, a.fyear, a.at, 
            a.prcc_c, a.ni, a.ceq, a.revt, a.cogs
@@ -466,7 +466,7 @@ def cross_section(_SAMPLE_START, _SAMPLE_END):
     ###############################################
     print('Step 5. Import Returns and Factors')
         
-    # Define your SQL statement for monthly Data
+    # Define your SQL statement for monthly data
     sql_statement = """
     SELECT a.permno, b.ticker, a.date, a.ret, a.retx, a.vol, 
            a.shrout, a.prc, b.shrcd, b.exchcd, b.comnam, c.dlstcd, c.dlret
@@ -559,7 +559,7 @@ def cross_section(_SAMPLE_START, _SAMPLE_END):
     df_full = df_full.rename(columns={'ceq':'be'})
     df_full['profitA'] = (df_full['revt']-df_full['cogs'])/df_full['at']
 
-    # Merge master dataset with ESG Data
+    # Merge master dataset with ESG data
     df_full = pd.merge(df_full, df_ESG, on=['permno','ldate'], how='left', validate='1:1')
     
     # Reformat date
@@ -601,7 +601,7 @@ def time_series(_SAMPLE_START, _SAMPLE_END):
     ###############################################
     print('Step 1. Import Daily Data')
     
-    # Define your SQL statement for daily Data
+    # Define your SQL statement for daily data
     sql_statement = """
     SELECT a.permno, b.ticker, a.date, a.ret                           
     FROM crsp_m_stock.dsf as a
@@ -628,7 +628,7 @@ def time_series(_SAMPLE_START, _SAMPLE_END):
     ###############################################
     print('Step 2. Import Monthly Data')
     
-    # Define your SQL statement for monthly Data
+    # Define your SQL statement for monthly data
     sql_statement = """
     SELECT a.permno, b.ticker, a.date, a.ret, b.shrcd
     FROM crsp_m_stock.msf as a
@@ -673,6 +673,109 @@ def time_series(_SAMPLE_START, _SAMPLE_END):
     df_ETF_raw = pd.merge(left = df_ETF_raw, right = df_FF, on ='ym', how = 'inner', validate = 'm:1')
     
     return df_ETF_raw
+
+def etfs(_SAMPLE_START, _SAMPLE_END):
+    
+    # Establish connection with wrds
+    db = wrds.Connection()
+    
+    ###############################################
+    ## Step 1. Import Daily Data
+    ###############################################
+    print('Step 1. Import Daily Data')
+    
+    # Define your SQL statement for daily data
+    sql_statement = """
+    SELECT a.permno, b.ticker, a.date, a.ret                           
+    FROM crsp_m_stock.dsf as a
+    LEFT JOIN crsp_m_stock.dsenames as b
+    ON a.permno=b.permno AND b.namedt<=a.date AND a.date<=b.nameendt
+    WHERE a.date >= '{}' AND a.date <= '{}' AND b.shrcd between 73 and 73 AND (b.ticker = 'IYF' OR b.ticker = 'IYK' OR b.ticker = 'IYW' OR b.ticker = 'IYZ' OR b.ticker = 'IYE')
+    """
+    
+    # Perform the query
+    #df_ETF_daily = db.raw_sql(sql_statement.format('2003-01-01', '2023-07-31'))
+    df_ETF_daily = db.raw_sql(sql_statement.format('2003-01-01', _SAMPLE_END))
+    
+    # Construct monthly date
+    df_ETF_daily['date'] = pd.to_datetime(df_ETF_daily['date'])
+    df_ETF_daily['ym'] = df_ETF_daily['date'].apply(lambda x: x.replace(day=1))
+
+    # Restrict only to variables of interest and rename
+    df_ETF_daily = df_ETF_daily[['date','ym','permno','ret']].drop_duplicates()
+    df_ETF_daily = df_ETF_daily.rename(columns={'ret':'retd'})
+    
+    print('Done')
+    ###############################################
+    ## Step 2. Import Monthly Data
+    ###############################################
+    print('Step 2. Import Monthly Data')
+    
+    # Define your SQL statement for monthly data
+    sql_statement = """
+    SELECT a.permno, b.ticker, a.date, a.ret, b.shrcd
+    FROM crsp_m_stock.msf as a
+    LEFT JOIN crsp_m_stock.msenames as b
+    ON a.permno=b.permno AND b.namedt<=a.date AND a.date<=b.nameendt
+    WHERE a.date >= '{}' AND a.date <= '{}' AND b.shrcd between 73 and 73 AND (b.ticker = 'IYF' OR b.ticker = 'IYK' OR b.ticker = 'IYW' OR b.ticker = 'IYZ' OR b.ticker = 'IYE')
+    """
+
+    # Perform the query
+    df_ETF_monthly = db.raw_sql(sql_statement.format('2003-01-01', _SAMPLE_END))
+    
+    # Construct monthly date
+    df_ETF_monthly['ym'] = pd.to_datetime(df_ETF_monthly['date']).apply(lambda x: x.replace(day=1))
+        
+    # Restrict only to variables of interest and rename
+    df_ETF_monthly = df_ETF_monthly[['ym','permno','ticker','ret']].drop_duplicates()
+    df_ETF_monthly = df_ETF_monthly.rename(columns={'ret':'retM'})
+    
+    print('Done')
+    ###############################################
+    ## Step 3. Import Fama-French Factors
+    ###############################################
+    print('Step 3. Import Fama-French Factors')
+    
+    # Define your SQL statement for FF factors
+    sql_statement = """
+    SELECT date, mktrf, rf
+    FROM ff.fivefactors_monthly
+    """
+    
+    # Perform the query
+    df_FF = db.raw_sql(sql_statement)
+    
+    # Construct monthly date
+    df_FF['ym'] = pd.to_datetime(df_FF['date']).apply(lambda x: x.replace(day=1))
+    
+    # Restrict only to variables of interest and rename
+    df_FF = df_FF[['ym','mktrf','rf']]
+    
+    # Merge the various datasets together
+    df_ETF_raw = pd.merge(left = df_ETF_daily, right = df_ETF_monthly, on =['ym','permno'], how = 'inner', validate = 'm:1')
+    df_ETF_raw = pd.merge(left = df_ETF_raw, right = df_FF, on ='ym', how = 'inner', validate = 'm:1')
+    
+    return df_ETF_raw
+
+def FFdaily(_SAMPLE_START, _SAMPLE_END):
+    
+    # Establish connection with wrds
+    db = wrds.Connection()
+    
+    # Define your SQL statement for FF factors
+    sql_statement = """
+    SELECT date, mktrf, smb, hml, rf, umd, rmw, cma
+    FROM ff.fivefactors_daily
+    """
+    
+    # Perform the query
+    df_FF = db.raw_sql(sql_statement.format(_SAMPLE_START, _SAMPLE_END))
+    
+    # Construct monthly date
+    df_FF['date'] = pd.to_datetime(df_FF['date'])
+    df_FF['ym'] = pd.PeriodIndex(df_FF['date'], freq='M')
+    
+    return df_FF
                   
 def rolling_betas(df):
     

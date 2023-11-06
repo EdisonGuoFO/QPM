@@ -2,7 +2,7 @@
 	--------------------------------------------------------------------
 	qpm.py
 
-	This code contains imports and helper functions
+	This Code contains imports and helper functions
 	to be used with the Jupyter notebooks for 
 
 	Chicago Booth course on Quantitative Portfolio Management
@@ -165,7 +165,7 @@ def load_data(data_dir, file_name, variable_list = []):
 		else:
 			df_full = pd.read_csv('%s/%s' %(data_dir, file_name))
 
-		## Additional adjustments regarding data type
+		## Additional adjustments regarding Data type
 		if 'date' in df_full.columns:
 			df_full['date'] = df_full['date'].map(lambda x : datetime.strptime(x, '%d%b%Y').strftime('%Y-%m-%d'))
 			df_full['date'] = pd.to_datetime(df_full['date'])
@@ -270,7 +270,7 @@ def create_lag(df, var_name, lag):
 
 def compute_rolling_by_permno(df, var_name, window_size, min_obs, stat_type):
 
-	## Use data only that we need
+	## Use Data only that we need
 	sub_df = df.reset_index()[['permno', 'ldate', 'index'] + [var_name]]
 
 	## Create a full panel

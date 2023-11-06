@@ -1,6 +1,6 @@
 '''
 
-This function download and clean all the data needed to run the PortfolioCrossSection script.
+This function download and clean all the Data needed to run the PortfolioCrossSection script.
 
 Chicago Booth course on Quantitative Portfolio Management
 by Ralph S.J. Koijen and Sangmin S. Oh.
@@ -30,7 +30,7 @@ def cross_section_compact(_SAMPLE_START, _SAMPLE_END, _STRATEGY_NAME, signal_var
     # Create list of variables to download
     variables_string = ', '.join(f'a.{vvv}' for vvv in signal_variables)
     
-    # Define your SQL statement for Compustat data
+    # Define your SQL statement for Compustat Data
     if len(signal_variables) > 0:
         sql_statement = f"""
         SELECT a.gvkey, a.datadate, a.at, a.ni, a.prcc_c, {variables_string}
@@ -125,7 +125,7 @@ def cross_section_compact(_SAMPLE_START, _SAMPLE_END, _STRATEGY_NAME, signal_var
     ###############################################
     print('Step 3. Import Returns and Factors')
     
-    # Define your SQL statement for monthly data
+    # Define your SQL statement for monthly Data
     sql_statement = """
     SELECT a.permno, b.ticker, a.date, a.ret, a.vol, 
            a.shrout, a.prc, b.shrcd, b.exchcd, c.dlstcd, c.dlret
@@ -256,7 +256,7 @@ def cross_section(_SAMPLE_START, _SAMPLE_END):
     ###############################################
     print('Step 1. Import Fundamentals from Compustat')
     
-    # Define your SQL statement for Compustat data
+    # Define your SQL statement for Compustat Data
     sql_statement = """
     SELECT a.gvkey, a.datadate, a.conm, a.fyear, a.at, 
            a.prcc_c, a.ni, a.ceq, a.revt, a.cogs
@@ -466,7 +466,7 @@ def cross_section(_SAMPLE_START, _SAMPLE_END):
     ###############################################
     print('Step 5. Import Returns and Factors')
         
-    # Define your SQL statement for monthly data
+    # Define your SQL statement for monthly Data
     sql_statement = """
     SELECT a.permno, b.ticker, a.date, a.ret, a.retx, a.vol, 
            a.shrout, a.prc, b.shrcd, b.exchcd, b.comnam, c.dlstcd, c.dlret
@@ -559,7 +559,7 @@ def cross_section(_SAMPLE_START, _SAMPLE_END):
     df_full = df_full.rename(columns={'ceq':'be'})
     df_full['profitA'] = (df_full['revt']-df_full['cogs'])/df_full['at']
 
-    # Merge master dataset with ESG data
+    # Merge master dataset with ESG Data
     df_full = pd.merge(df_full, df_ESG, on=['permno','ldate'], how='left', validate='1:1')
     
     # Reformat date
@@ -601,7 +601,7 @@ def time_series(_SAMPLE_START, _SAMPLE_END):
     ###############################################
     print('Step 1. Import Daily Data')
     
-    # Define your SQL statement for daily data
+    # Define your SQL statement for daily Data
     sql_statement = """
     SELECT a.permno, b.ticker, a.date, a.ret                           
     FROM crsp_m_stock.dsf as a
@@ -628,7 +628,7 @@ def time_series(_SAMPLE_START, _SAMPLE_END):
     ###############################################
     print('Step 2. Import Monthly Data')
     
-    # Define your SQL statement for monthly data
+    # Define your SQL statement for monthly Data
     sql_statement = """
     SELECT a.permno, b.ticker, a.date, a.ret, b.shrcd
     FROM crsp_m_stock.msf as a
